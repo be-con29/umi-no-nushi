@@ -193,10 +193,10 @@ export interface ExitPlacement {
   action: FieldEntityAction;
 }
 
-/** 見た目だけの装飾物(木など)。当たり判定は持たず、常に通行可能な地形の上に重ねて描く */
+/** 見た目だけの装飾物。当たり判定は持たず、常に通行可能な地形の上に重ねて描く */
 export interface DecorationPlacement {
   id: string;
-  kind: "tree";
+  kind: "tree" | "well" | "lantern" | "fence" | "flower";
   x: number;
   y: number;
 }

@@ -83,6 +83,7 @@ function GameApp() {
     [dispatch],
   );
 
+  function renderScreen() {
   if (screen === "field") {
     return (
       <FieldScreen
@@ -245,6 +246,13 @@ function GameApp() {
   }
 
   return null;
+  }
+
+  return (
+    <div key={screen} className="screen-fade-in">
+      {renderScreen()}
+    </div>
+  );
 }
 
 export default function App() {

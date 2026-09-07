@@ -11,6 +11,7 @@ import {
 import { TICK_MS, TENSION_WARNING } from "../../game/balance";
 import { Gauge } from "../ui/Gauge";
 import { ScreenShell } from "../ui/ScreenShell";
+import { WaterScene } from "../ui/WaterScene";
 
 interface TensionGameScreenProps {
   fish: FishDefinition;
@@ -68,10 +69,15 @@ export function TensionGameScreen({ fish, rig, gear, onFinish }: TensionGameScre
         />
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center">
-        <div className="text-8xl">{fish.emoji}</div>
-        {state.status === "won" && <p className="mt-4 text-emerald-300 font-bold text-lg">釣り上げた！</p>}
-        {state.status === "lost" && <p className="mt-4 text-red-400 font-bold text-lg">糸が切れた…逃げられた！</p>}
+      <div className="flex-1 flex flex-col items-center justify-center gap-2">
+        <div className="relative">
+          <WaterScene phase="idle" />
+          <div className="absolute inset-0 flex items-center justify-center text-6xl drop-shadow-lg">
+            {fish.emoji}
+          </div>
+        </div>
+        {state.status === "won" && <p className="mt-2 text-emerald-300 font-bold text-lg">釣り上げた！</p>}
+        {state.status === "lost" && <p className="mt-2 text-red-400 font-bold text-lg">糸が切れた…逃げられた！</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-3 select-none">

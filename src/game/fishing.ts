@@ -1,5 +1,29 @@
 // アタリ抽選・魚の選択・釣果のサイズ/価格計算。副作用のない純粋関数として実装する。
 import type { BaitDefinition, FishDefinition, RigDefinition, SpotDefinition, TimeOfDay, Weather } from "../types";
+import { CAST_GAUGE_PERIOD_MS } from "./balance";
+
+/**
+ * キャストの飛距離ゲージの現在位置(0〜100)を、経過時間から求める。
+ * 三角波で0→100→0を往復させ、中央(50)がジャストタイミングの「的」になる。
+ */
+export function castGaugePosition(elapsedMs: number): number {
+  const t = (elapsedMs % (CAST_GAUGE_PERIOD_MS * 2)) / CAST_GAUGE_PERIOD_MS;
+  return t <= 1 ? t * 100 : (2 - t) * 100;
+}
+
+/** ゲージ停止位置(0〜100)から、中央にどれだけ近いかを 0(外れ)〜1(ジャスト) の質で返す */
+export function castQualityFromPosition(position: number): number {
+  const distanceFromCenter = Math.abs(position - 50);
+  return Math.max(0, 1 - distanceFromCenter / 50);
+}
+
+/**
+ * キャストの質をアタリ待ち時間の倍率に変換する。質が高いほど遠くまで飛び、待ち時間が短くなる
+ * (biteRateMultiplier 相当としてそのまま rollBiteWaitMs に掛け合わせられる)。
+ */
+export function castQualityBiteMultiplier(quality: number): number {
+  return 1 + quality * 0.5;
+}
 
 /**
  * 指定の釣り場・餌・時間帯・天候で食いつく可能性のある魚の一覧を返す。

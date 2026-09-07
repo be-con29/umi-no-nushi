@@ -29,3 +29,8 @@ export const HOOK_WINDOW_MS = 1300;
  * 逆に十分な道具を揃えていればその分ファイトが大きく楽になる(game/fightEngine.ts参照)。
  */
 export const GEAR_DEFICIT_MULTIPLIER = 2;
+
+/** キャストの飛距離ゲージが端から端まで往復するのにかかる時間(ms)。ゲージバーの周期 */
+export const CAST_GAUGE_PERIOD_MS = 1300;
+/** 飛距離ゲージの決定後、キャストモーションが終わるまでの演出時間(ms) */
+export const CAST_MOTION_MS = 450;

@@ -2,7 +2,9 @@
 // タイル・キャラクタースプライトは 16x16 のCanvasにピクセル単位で描画し、
 // 一度描いた結果をメモ化してから FieldScreen の描画ループで drawImage するだけにする
 // (毎フレーム塗り直すのは無駄なため)。
-import type { Direction, TileType } from "../types";
+import type { DecorationPlacement, Direction, TileType } from "../types";
+
+type DecorationKind = DecorationPlacement["kind"];
 
 export const TILE_SIZE = 16;
 
@@ -439,17 +441,174 @@ function drawTree(ctx: CanvasRenderingContext2D, variant: number): void {
   ctx.fill();
 }
 
+function drawWell(ctx: CanvasRenderingContext2D): void {
+  // 石積みの井戸
+  ctx.fillStyle = "rgba(20, 20, 10, 0.2)";
+  ctx.beginPath();
+  ctx.ellipse(8, 14, 5, 2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#8a877c";
+  ctx.beginPath();
+  ctx.ellipse(8, 10, 5, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#6a675c";
+  ctx.fillRect(3, 6, 10, 6);
+  ctx.fillStyle = "#8a877c";
+  ctx.fillRect(3, 6, 10, 1);
+  ctx.fillStyle = "#4a4740";
+  ctx.beginPath();
+  ctx.ellipse(8, 7, 3.5, 1.8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#2d4a5a";
+  ctx.beginPath();
+  ctx.ellipse(8, 7, 2.6, 1.2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // 屋根柱と小さな屋根
+  ctx.fillStyle = "#5c4530";
+  ctx.fillRect(2, 1, 1, 6);
+  ctx.fillRect(13, 1, 1, 6);
+  ctx.fillStyle = "#6d5233";
+  ctx.fillRect(1, 0, 14, 2);
+}
+
+function drawLantern(ctx: CanvasRenderingContext2D): void {
+  // 木の柱に載った石灯籠風の常夜灯
+  ctx.fillStyle = "rgba(20, 20, 10, 0.2)";
+  ctx.beginPath();
+  ctx.ellipse(8, 15, 3, 1.2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#726c60";
+  ctx.fillRect(7, 9, 2, 6);
+  ctx.fillStyle = "#8a8478";
+  ctx.fillRect(5, 7, 6, 3);
+  ctx.fillStyle = "#f2c96a";
+  ctx.fillRect(6, 7, 4, 2);
+  ctx.fillStyle = "#726c60";
+  ctx.fillRect(4, 5, 8, 2);
+  ctx.fillStyle = "#5c574c";
+  ctx.beginPath();
+  ctx.moveTo(3, 5);
+  ctx.lineTo(8, 1);
+  ctx.lineTo(13, 5);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawFence(ctx: CanvasRenderingContext2D): void {
+  // 低い木柵(横木2本+杭)
+  ctx.fillStyle = "#7a5c3c";
+  for (let x = 1; x < TILE_SIZE; x += 5) {
+    ctx.fillRect(x, 6, 2, 8);
+  }
+  ctx.fillStyle = "#8f6d48";
+  ctx.fillRect(0, 7, TILE_SIZE, 2);
+  ctx.fillRect(0, 11, TILE_SIZE, 2);
+}
+
+const FLOWER_COLORS: readonly string[] = ["#d98a8a", "#e0c15c", "#c78ad9"];
+
+function drawFlower(ctx: CanvasRenderingContext2D, variant: number): void {
+  ctx.fillStyle = "#5f7a4a";
+  ctx.beginPath();
+  ctx.ellipse(8, 12, 5, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+  const color = FLOWER_COLORS[variant % FLOWER_COLORS.length];
+  const rand = mulberry32(variant + 500);
+  for (let i = 0; i < 5; i++) {
+    const x = 4 + Math.floor(rand() * 8);
+    const y = 9 + Math.floor(rand() * 4);
+    setPixel(ctx, x, y, color);
+    setPixel(ctx, x + 1, y, "#eede9a");
+  }
+}
+
 const decorationCache = new Map<string, HTMLCanvasElement>();
 
 /** 装飾物の事前描画済みCanvasを返す(メモ化)。背景は透明 */
-export function getDecorationCanvas(kind: "tree", variant: number): HTMLCanvasElement {
+export function getDecorationCanvas(kind: DecorationKind, variant: number): HTMLCanvasElement {
   const key = `${kind}:${variant}`;
   const cached = decorationCache.get(key);
   if (cached) return cached;
   const canvas = newTileCanvas();
   const ctx = canvas.getContext("2d")!;
-  if (kind === "tree") drawTree(ctx, variant);
+  switch (kind) {
+    case "tree":
+      drawTree(ctx, variant);
+      break;
+    case "well":
+      drawWell(ctx);
+      break;
+    case "lantern":
+      drawLantern(ctx);
+      break;
+    case "fence":
+      drawFence(ctx);
+      break;
+    case "flower":
+      drawFlower(ctx, variant);
+      break;
+  }
   decorationCache.set(key, canvas);
+  return canvas;
+}
+
+// ---- 釣りパート: ウキ・魚影 ----
+// game/pixelArt.ts の他の描画物と同じく、すべてコードで直接ドット絵を描く。
+
+let bobberCanvas: HTMLCanvasElement | null = null;
+
+/** 水面に浮かぶウキ(赤白の目印)。16x16、背景は透明 */
+export function getBobberCanvas(): HTMLCanvasElement {
+  if (bobberCanvas) return bobberCanvas;
+  const canvas = newTileCanvas();
+  const ctx = canvas.getContext("2d")!;
+  // 水面の波紋(淡い輪)
+  ctx.strokeStyle = "rgba(255,255,255,0.35)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.ellipse(8, 11, 5, 1.5, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  // 竿糸
+  ctx.strokeStyle = "#e8e4d8";
+  ctx.beginPath();
+  ctx.moveTo(8, 0);
+  ctx.lineTo(8, 6);
+  ctx.stroke();
+  // 浮き本体(上=赤、下=白)
+  ctx.fillStyle = "#c94a3a";
+  ctx.beginPath();
+  ctx.ellipse(8, 6, 2, 3, 0, Math.PI, 0);
+  ctx.fill();
+  ctx.fillStyle = "#f2ece0";
+  ctx.beginPath();
+  ctx.ellipse(8, 6, 2, 3, 0, 0, Math.PI);
+  ctx.fill();
+  ctx.fillStyle = "#8a6a44";
+  ctx.fillRect(7, 8, 2, 2);
+  bobberCanvas = canvas;
+  return canvas;
+}
+
+let fishShadowCanvas: HTMLCanvasElement | null = null;
+
+/** 接近してくる魚影(水面下のシルエット)。24x12、背景は透明 */
+export function getFishShadowCanvas(): HTMLCanvasElement {
+  if (fishShadowCanvas) return fishShadowCanvas;
+  const canvas = document.createElement("canvas");
+  canvas.width = 24;
+  canvas.height = 12;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "rgba(10, 20, 15, 0.45)";
+  ctx.beginPath();
+  ctx.ellipse(12, 6, 10, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(2, 6);
+  ctx.lineTo(-2, 2);
+  ctx.lineTo(-2, 10);
+  ctx.closePath();
+  ctx.fill();
+  fishShadowCanvas = canvas;
   return canvas;
 }
 

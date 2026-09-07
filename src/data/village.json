@@ -116,6 +116,15 @@
     { "id": "tree5", "kind": "tree", "x": 14, "y": 0 },
     { "id": "tree6", "kind": "tree", "x": 15, "y": 0 },
     { "id": "tree7", "kind": "tree", "x": 0, "y": 6 },
-    { "id": "tree8", "kind": "tree", "x": 15, "y": 9 }
+    { "id": "tree8", "kind": "tree", "x": 15, "y": 9 },
+    { "id": "well1", "kind": "well", "x": 7, "y": 6 },
+    { "id": "lantern1", "kind": "lantern", "x": 6, "y": 9 },
+    { "id": "lantern2", "kind": "lantern", "x": 9, "y": 9 },
+    { "id": "fence1", "kind": "fence", "x": 1, "y": 3 },
+    { "id": "fence2", "kind": "fence", "x": 2, "y": 3 },
+    { "id": "fence3", "kind": "fence", "x": 3, "y": 3 },
+    { "id": "flower1", "kind": "flower", "x": 6, "y": 6 },
+    { "id": "flower2", "kind": "flower", "x": 9, "y": 7 },
+    { "id": "flower3", "kind": "flower", "x": 4, "y": 4 }
   ]
 }
