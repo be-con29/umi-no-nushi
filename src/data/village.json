@@ -26,11 +26,7 @@
       "emoji": "🏪",
       "x": 4,
       "y": 1,
-      "action": {
-        "kind": "dialogue",
-        "speakerName": "道具屋の店主",
-        "lines": ["すまんな、いい竿とリールを仕入れる算段をつけてるところだ。", "もう少し待っててくれ。"]
-      }
+      "action": { "kind": "screen", "target": "toolShop" }
     },
     {
       "id": "bait_shop",

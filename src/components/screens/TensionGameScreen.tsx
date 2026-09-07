@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { FishDefinition, RigDefinition } from "../../types";
+import type { GearStats } from "../../game/gear";
 import {
   createFightState,
   tensionPercent,
@@ -14,23 +15,25 @@ import { ScreenShell } from "../ui/ScreenShell";
 interface TensionGameScreenProps {
   fish: FishDefinition;
   rig: RigDefinition;
+  gear: GearStats;
   onFinish: (status: "won" | "lost") => void;
 }
 
-export function TensionGameScreen({ fish, rig, onFinish }: TensionGameScreenProps) {
+export function TensionGameScreen({ fish, rig, gear, onFinish }: TensionGameScreenProps) {
   const [state, setState] = useState<FightState>(() => createFightState(fish));
   const actionRef = useRef<FightAction>("idle");
   const finishedRef = useRef(false);
+  const underGeared = gear.lineStrength < fish.requiredLineStrength;
 
   useEffect(() => {
     const interval = window.setInterval(() => {
       setState((prev) => {
         if (prev.status !== "fighting") return prev;
-        return tickFight(prev, actionRef.current, fish, rig);
+        return tickFight(prev, actionRef.current, fish, rig, gear);
       });
     }, TICK_MS);
     return () => window.clearInterval(interval);
-  }, [fish, rig]);
+  }, [fish, rig, gear]);
 
   useEffect(() => {
     if (state.status !== "fighting" && !finishedRef.current) {
@@ -41,7 +44,7 @@ export function TensionGameScreen({ fish, rig, onFinish }: TensionGameScreenProp
   }, [state.status, onFinish]);
 
   const staminaPercent = (state.stamina / state.staminaMax) * 100;
-  const tensPercent = tensionPercent(state, rig);
+  const tensPercent = tensionPercent(state, rig, gear, fish);
 
   function setAction(action: FightAction) {
     if (state.status === "fighting") actionRef.current = action;
@@ -49,6 +52,11 @@ export function TensionGameScreen({ fish, rig, onFinish }: TensionGameScreenProp
 
   return (
     <ScreenShell title="ファイト中！" subtitle={`${fish.emoji} ${fish.name}`}>
+      {underGeared && state.status === "fighting" && (
+        <p className="text-center text-xs font-bold text-red-300 bg-red-950/40 border border-red-400/40 rounded-lg py-1.5">
+          ⚠ 糸の強度が足りていない…このままでは長く持たない！
+        </p>
+      )}
       <div className="flex flex-col gap-4">
         <Gauge label="魚の体力" percent={staminaPercent} colorClass="bg-emerald-400" />
         <Gauge

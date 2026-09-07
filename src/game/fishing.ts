@@ -1,14 +1,24 @@
 // アタリ抽選・魚の選択・釣果のサイズ/価格計算。副作用のない純粋関数として実装する。
-import type { BaitDefinition, FishDefinition, RigDefinition, SpotDefinition } from "../types";
+import type { BaitDefinition, FishDefinition, RigDefinition, SpotDefinition, TimeOfDay, Weather } from "../types";
 
-/** 指定の釣り場・餌で食いつく可能性のある魚の一覧(好みの餌に合致するもののみ)を返す */
+/**
+ * 指定の釣り場・餌・時間帯・天候で食いつく可能性のある魚の一覧を返す。
+ * `appearsInTimeOfDay` / `appearsInWeather` が設定されている魚(主にぬし)は、
+ * その条件に合致しない限り候補から外れる=アタリが発生しない。
+ */
 export function candidateFish(
   fish: FishDefinition[],
   spot: SpotDefinition,
   bait: BaitDefinition,
+  timeOfDay: TimeOfDay,
+  weather: Weather,
 ): FishDefinition[] {
   return fish.filter(
-    (f) => spot.fishIds.includes(f.id) && f.favoredBaitIds.includes(bait.id),
+    (f) =>
+      spot.fishIds.includes(f.id) &&
+      f.favoredBaitIds.includes(bait.id) &&
+      (!f.appearsInTimeOfDay || f.appearsInTimeOfDay.includes(timeOfDay)) &&
+      (!f.appearsInWeather || f.appearsInWeather.includes(weather)),
   );
 }
 

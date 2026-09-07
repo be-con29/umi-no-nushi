@@ -1,9 +1,11 @@
 // テンション管理ミニゲームの1tick分の状態遷移。副作用のない純粋関数として実装し、
 // UI(TensionGameScreen)からは createFightState / tickFight を呼ぶだけにする。
 import type { FishDefinition, RigDefinition } from "../types";
+import type { GearStats } from "./gear";
 import {
   EASE_STAMINA_REGEN,
   EASE_TENSION_RELIEF,
+  GEAR_DEFICIT_MULTIPLIER,
   REEL_DAMAGE,
   REEL_TENSION_COST,
   TENSION_SNAP,
@@ -37,14 +39,28 @@ export interface FightState {
   lastFishPull: number;
 }
 
-/** 仕掛け補正込みの「これに達したら糸が切れる」張力値 */
-export function effectiveSnapTension(rig: RigDefinition): number {
-  return TENSION_SNAP + rig.tensionSnapBonus;
+/**
+ * 道具(竿の弾力+糸の強度)による糸切れ耐性への補正値。
+ * 糸の強度が魚の requiredLineStrength に届いていないと大きくマイナスになり、
+ * 逆に十分な強度を持つ糸ならプラスに働く(「道具が弱いと大物は物理的に上げられない」ゲート)。
+ */
+export function gearTensionBonus(gear: GearStats, fish: FishDefinition): number {
+  return gear.rodFlex + GEAR_DEFICIT_MULTIPLIER * (gear.lineStrength - fish.requiredLineStrength);
+}
+
+/** 仕掛け・道具補正込みの「これに達したら糸が切れる」張力値 */
+export function effectiveSnapTension(rig: RigDefinition, gear: GearStats, fish: FishDefinition): number {
+  return TENSION_SNAP + rig.tensionSnapBonus + gearTensionBonus(gear, fish);
 }
 
 /** ゲージ表示用に 0-100 の割合へ変換する */
-export function tensionPercent(state: FightState, rig: RigDefinition): number {
-  return Math.min(100, (state.tension / effectiveSnapTension(rig)) * 100);
+export function tensionPercent(
+  state: FightState,
+  rig: RigDefinition,
+  gear: GearStats,
+  fish: FishDefinition,
+): number {
+  return Math.min(100, (state.tension / effectiveSnapTension(rig, gear, fish)) * 100);
 }
 
 export function createFightState(fish: FishDefinition): FightState {
@@ -140,6 +156,7 @@ export function tickFight(
   action: FightAction,
   fish: FishDefinition,
   rig: RigDefinition,
+  gear: GearStats,
   random: () => number = Math.random,
 ): FightState {
   if (state.status !== "fighting") return state;
@@ -151,7 +168,7 @@ export function tickFight(
 
   if (action === "reel") {
     tension += REEL_TENSION_COST * rig.reelTensionModifier;
-    stamina -= REEL_DAMAGE;
+    stamina -= REEL_DAMAGE * gear.reelPower;
   } else if (action === "ease") {
     tension -= EASE_TENSION_RELIEF;
     stamina += EASE_STAMINA_REGEN;
@@ -160,7 +177,7 @@ export function tickFight(
   tension = Math.max(0, tension);
   stamina = Math.min(state.staminaMax, Math.max(0, stamina));
 
-  const effectiveSnap = effectiveSnapTension(rig);
+  const effectiveSnap = effectiveSnapTension(rig, gear, fish);
 
   let status: FightStatus = "fighting";
   if (stamina <= 0) status = "won";

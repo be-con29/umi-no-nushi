@@ -22,3 +22,10 @@ export const TENSION_SNAP = 100;
 
 /** アタリ発生からフッキングQTEに反応できる制限時間(ms) */
 export const HOOK_WINDOW_MS = 1300;
+
+/**
+ * 道具(竿+糸)が魚の要求する糸の強度(requiredLineStrength)に対して不足/超過している分を、
+ * 何倍にして糸切れ耐性(tensionSnapBonus)に反映するか。大きいほど「道具不足」の罰則が重くなり、
+ * 逆に十分な道具を揃えていればその分ファイトが大きく楽になる(game/fightEngine.ts参照)。
+ */
+export const GEAR_DEFICIT_MULTIPLIER = 2;

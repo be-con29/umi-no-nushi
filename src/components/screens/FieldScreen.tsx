@@ -33,7 +33,7 @@ interface FieldScreenProps {
   day: number;
   timeOfDay: TimeOfDay;
   weather: Weather;
-  onNavigate: (target: "stock" | "zukan" | "spotSelect") => void;
+  onNavigate: (target: "stock" | "zukan" | "spotSelect" | "toolShop") => void;
   onRestAtInn: () => void;
 }
 

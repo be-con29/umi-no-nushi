@@ -41,6 +41,20 @@ export interface FishDefinition {
   favoredBaitIds: string[];
   /** 生息する釣り場ID */
   spotIds: string[];
+
+  /**
+   * このファイトに耐えるために必要な糸の強度(LineDefinition.strength)。
+   * 実際の糸切れ耐性は `rodFlex + 2 * (lineStrength - requiredLineStrength)` で計算され、
+   * 道具がこの値に満たないと閾値が大きく下がり、掛かってもほぼ確実に糸を切られる
+   * (game/fightEngine.ts の effectiveSnapTension を参照)。
+   */
+  requiredLineStrength: number;
+  /** エリアの「ぬし」であるか。ぬしを釣ると対応する釣り場の unlockRequiresFishId が解放される */
+  isNushi?: boolean;
+  /** 指定した場合、この時間帯以外ではアタリが発生しない(ぬしの出現条件) */
+  appearsInTimeOfDay?: TimeOfDay[];
+  /** 指定した場合、この天候以外ではアタリが発生しない(ぬしの出現条件) */
+  appearsInWeather?: Weather[];
 }
 
 export interface BaitDefinition {
@@ -74,6 +88,43 @@ export interface SpotDefinition {
   /** アタリが発生するまでの基準待ち時間(ms) */
   biteWaitMinMs: number;
   biteWaitMaxMs: number;
+  /** 指定した場合、このIDの魚を一度でも釣り上げるまでこの釣り場は選択できない */
+  unlockRequiresFishId?: string;
+}
+
+// ---- 道具(竿・リール・糸) ----
+// 餌・仕掛けと違い、釣行ごとの選択ではなく道具屋で購入して持ち帰る「所持品」として扱う。
+// 各カテゴリで所持している中から tier が最も高いものを自動装備する(game/gear.ts)。
+
+export interface RodDefinition {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;
+  /** 高いほど強い(所持品から自動装備する基準になる) */
+  tier: number;
+  /** 竿の弾力。大きいほど糸切れ耐性(tensionSnapBonus)に加算される */
+  flex: number;
+}
+
+export interface ReelDefinition {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;
+  tier: number;
+  /** リールの巻き取り力。「巻く」操作の体力ダメージに掛かる倍率(基準1.0) */
+  reelPower: number;
+}
+
+export interface LineDefinition {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;
+  tier: number;
+  /** 糸の強度。魚の requiredLineStrength と比較され、不足すると糸切れ耐性が大きく下がる */
+  strength: number;
 }
 
 // ---- フィールド探索 ----
@@ -92,7 +143,7 @@ export type FieldEntityType = "npc" | "building" | "exit";
 export type FieldEntityAction =
   | { kind: "talk"; villagerId: string }
   | { kind: "dialogue"; speakerName: string; lines: string[] }
-  | { kind: "screen"; target: "stock" | "zukan" | "spotSelect" }
+  | { kind: "screen"; target: "stock" | "zukan" | "spotSelect" | "toolShop" }
   | { kind: "restAtInn" };
 
 export interface FieldEntity {
@@ -146,7 +197,7 @@ export interface ZukanEntry {
 }
 
 export interface SaveData {
-  version: 2;
+  version: 3;
   money: number;
   stock: CaughtFish[];
   zukan: Record<string, ZukanEntry>;
@@ -158,4 +209,8 @@ export interface SaveData {
   weather: Weather;
   /** 村人から聞いて解放した噂ID(将来、釣り場の解放条件として使う) */
   rumors: string[];
+  /** 所持している竿/リール/糸のID一覧。tierが最も高いものを自動装備する */
+  ownedRodIds: string[];
+  ownedReelIds: string[];
+  ownedLineIds: string[];
 }

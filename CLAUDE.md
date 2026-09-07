@@ -44,18 +44,22 @@
 ```
 src/
   data/              # ゲームデータ本体（JSON）。ここを編集するだけでコンテンツ追加可能にする
-    fish.json        # 魚の定義
+    fish.json        # 魚の定義（4エリア×regular+ぬし構成）
     baits.json       # 餌の定義
-    rigs.json        # 仕掛け(糸)の定義 ※将来 rods.json / reels.json に分割予定(9章)
-    spots.json       # 釣り場の定義
+    rigs.json        # 仕掛け(釣行ごとに選ぶ消耗品的な糸)の定義
+    rods.json         # 竿の定義(所持品として道具屋で購入)
+    reels.json        # リールの定義(同上)
+    lines.json         # 糸(道具としての本線)の定義(同上)
+    spots.json       # 釣り場の定義（4エリア、解放条件つき）
     village.json      # フィールドマップ定義（凪浦。将来複数マップに拡張）
     villagers.json    # 村人の会話データ
     index.ts          # 上記jsonをロード・型付けして export
   types.ts           # データ/セーブデータの型定義
   game/              # 副作用のない純粋関数群（テストしやすい形を維持）
     balance.ts        # ファイトのチューニング定数
-    fishing.ts         # アタリ抽選・魚選択・サイズ/価格ロジック
-    fightEngine.ts      # テンション管理ミニゲームの1tick分の状態遷移
+    fishing.ts         # アタリ抽選・魚選択・サイズ/価格ロジック(時間帯/天候フィルタ込み)
+    fightEngine.ts      # テンション管理ミニゲームの1tick分の状態遷移(道具ゲート込み)
+    gear.ts              # 所持道具から現在の装備ステータスを求める
     field.ts            # フィールド上の移動・当たり判定・インタラクション判定
     time.ts              # 時間帯/天候の進行ロジック
   store/
@@ -69,9 +73,12 @@ src/
   index.css
 ```
 
+**餌・仕掛け(rigs.json) は釣行ごとに選ぶ消耗品的な選択**、**竿・リール・糸(rods/reels/lines.json)
+は道具屋で購入して持ち帰る所持品**、という2系統に分けている(6章参照)。両者は独立して重ね掛けされる。
+
 ## 4. 画面構成・遷移（状態機械）
 
-`Screen` = `'field' | 'spotSelect' | 'tackle' | 'fishing' | 'fight' | 'result' | 'stock' | 'zukan'`
+`Screen` = `'field' | 'spotSelect' | 'tackle' | 'fishing' | 'fight' | 'result' | 'stock' | 'zukan' | 'toolShop'`
 
 `field` がゲームのホーム画面であり、以前の「港町（ボタン選択のみのメニュー画面）」を置き換える。
 
@@ -80,13 +87,17 @@ src/
   - 建物に入る/近づくと対応する画面 or 会話が開く（道具屋・餌屋・漁協・宿屋・自宅）。
   - 村の外れの「海への道」を進むと `spotSelect` へ。
   - 画面内の「メニュー」ボタンから図鑑(`zukan`)などにアクセスできる（4章メニュー要件に対応）。
-- **spotSelect（釣り場選択）**: 噂で解放された釣り場を含めリスト表示。
-- **tackle（餌・仕掛け選択）**: 餌・仕掛けを選んで出船。
+- **spotSelect（釣り場選択）**: 4エリアをリスト表示。未解放のエリアは🔒表示で選択不可
+  （解放条件は7章 `unlockRequiresFishId` を参照）。
+- **tackle（餌・仕掛け選択）**: 餌・仕掛け(釣行ごとの消耗品)を選んで出船。現在装備中の
+  竿・リール・糸（道具屋での所持品、6章参照）も表示する。
 - **fishing（キャスト〜アタリ〜アワセ）**: 詳細は6章。
 - **fight（テンション管理ミニゲーム）**: 詳細は6章。
-- **result（釣果）**: サイズ・価格を表示、在庫追加＆図鑑更新。「続けて釣る」/「村に戻る」。
+- **result（釣果）**: サイズ・価格を表示、在庫追加＆図鑑更新。初めてぬしを釣った場合は
+  「新しい釣り場が解放された」ことも表示する。「続けて釣る」/「村に戻る」。
 - **stock（在庫/売却＝漁協）**: 在庫を売却して所持金に変換。フィールド上の「漁協」から遷移。
 - **zukan（図鑑）**: 捕獲状況・最大サイズ・捕獲数を表示。フィールドの「メニュー」から遷移。
+- **toolShop（道具屋）**: 竿・リール・糸を購入する。フィールド上の「道具屋」から遷移。詳細は6章。
 
 会話ウィンドウ（ダイアログボックス）は画面下部に固定表示され、1文ずつタップで送る
 （3章の「会話ウィンドウ」要件・`components/ui/DialogueBox.tsx`）。フィールド探索中に
@@ -119,23 +130,47 @@ src/
   操作にする。**現状のプロトタイプ実装は簡略版**（ボタンを押すと固定モーションでキャスト完了）
   であり、飛距離ゲージは未実装（9章の実装状況を参照。将来 `fishing.ts` にゲージ判定ロジックを追加）。
 - **待機**: アタリまでの待ち時間は `spots.json` の待機時間レンジと餌/仕掛けの倍率で決まる
-  （既存の `rollBiteWaitMs` を流用）。将来的には待機中に魚影が水中で近づいてくる演出を追加する
-  （9章）。
+  （既存の `rollBiteWaitMs` を流用）。アタリの候補魚は釣り場・餌に加え、**現在の時間帯・天候**
+  でも絞り込まれる（`game/fishing.ts` の `candidateFish`。8章の時間帯・天候システムと連動）。
+  将来的には待機中に魚影が水中で近づいてくる演出を追加する（9章）。
 - **アワセ**: アタリ発生から一定時間内にタップすると成功。**将来的には「早すぎ」も失敗にする**
   （アタリの前にタップしてしまうケース）。現状のプロトタイプ実装はアタリ発生後の遅延失敗のみ
   判定している（9章）。
-- **ファイト（テンション管理ミニゲーム）**: 既存の `game/fightEngine.ts` をそのまま踏襲する。
+- **ファイト（テンション管理ミニゲーム）**: `game/fightEngine.ts` に集約。
   - `TICK_MS`（既定 200ms）ごとにゲームループが進む。「巻く」「緩める」ボタンを
     **押している間**そのアクションが有効。どちらも押していなければ魚の引きだけが反映される。
   - 状態: `tension`（糸の張力）、`stamina`（魚の体力。0で釣り上げ成功）。
   - 魚ごとの「引きのクセ」（`pullPattern`）: `steady` / `burst` / `diver` / `erratic`。
   - 難易度差別化は魚側の `pullPattern` + `pullPower` + `staminaMax` で行う。
-  - **道具（竿の弾力・リールの巻き取り力・糸の強度）がここに介入する**。現状は `rigs.json`
-    （糸に相当）の `tensionSnapBonus`（糸切れ耐性）と `reelTensionModifier`（巻いた時のテンション
-    上昇倍率）のみ実装済み。竿・リールのステータス化と、それに応じて「道具が弱いと大物が
-    物理的に釣れない」ゲート（例: 必要糸強度を満たさないと即糸切れ、必要リール力を満たさないと
-    引き剥がし不可能、等）は9章のロードマップに記載し、今後 `rods.json` / `reels.json` として
-    切り出す。
+  - 「巻く」操作: `stamina -= REEL_DAMAGE * gear.reelPower`（リールの巻き取り力が効く）,
+    `tension += REEL_TENSION_COST * rig.reelTensionModifier`（仕掛けの糸質が効く）。
+  - 「緩める」操作: `tension -= EASE_TENSION_RELIEF`, `stamina += EASE_STAMINA_REGEN`
+    （全魚共通、道具では変化しない）。
+
+### 道具による進行ゲート(竿・リール・糸)
+
+- 竿・リール・糸は `rods.json` / `reels.json` / `lines.json` にステータス化して定義する
+  （`RodDefinition.flex`＝竿の弾力、`ReelDefinition.reelPower`＝リールの巻き取り力、
+  `LineDefinition.strength`＝糸の強度）。餌・仕掛けと違い**釣行ごとの選択ではなく道具屋
+  （フィールド上の「道具屋」→`toolShop`画面）で購入して持ち帰る所持品**として扱い、セーブデータ
+  の `ownedRodIds` / `ownedReelIds` / `ownedLineIds` に追加する。各カテゴリで所持している中から
+  `tier` が最も高いものを自動装備する（個別に「装備する」操作はUI上に用意しない。`game/gear.ts`
+  の `currentGear`）。
+- 魚側は `FishDefinition.requiredLineStrength` で「このファイトに必要な糸の強度」を持つ。
+  糸切れ耐性(`effectiveSnapTension`)は次の式で計算する（`game/fightEngine.ts`）:
+
+  ```
+  gearBonus = rodFlex + GEAR_DEFICIT_MULTIPLIER * (lineStrength - requiredLineStrength)
+  effectiveSnapTension = TENSION_SNAP(100) + rig.tensionSnapBonus + gearBonus
+  ```
+
+  `GEAR_DEFICIT_MULTIPLIER`（既定2、`game/balance.ts`）により、必要強度に届いていないと
+  閾値が大きく下がり、掛かってもほぼ確実に糸を切られる（＝「道具が弱いと大物は物理的に
+  上げられない」ゲート）。逆に十分な強度を持つ道具なら閾値が100を大きく超え、ファイトが
+  大きく楽になる。`TensionGameScreen` は `gear.lineStrength < fish.requiredLineStrength` の場合、
+  ファイト画面に警告バナーを表示する。
+- 仕掛け(rigs.json)の `tensionSnapBonus` / `reelTensionModifier` は引き続き有効で、道具の
+  大きな補正の上に乗る小さな微調整として機能する。
 
 ## 7. データ駆動設計（拡張方針）
 
@@ -145,15 +180,22 @@ src/
 
 - `fish.json` = `FishDefinition`（id, 表示名, emoji, 説明, レアリティ, 出現重み, サイズ範囲,
   基準価格, `staminaMax`, `pullPattern` とそのパラメータ, `favoredBaitIds`, `spotIds`,
-  将来: 出現しやすい時間帯/天候、`isNushi` フラグ）
+  `requiredLineStrength`(道具ゲート), `isNushi?`(エリアのぬしフラグ),
+  `appearsInTimeOfDay?` / `appearsInWeather?`(出現条件、未指定なら常時)）
 - `baits.json` = `BaitDefinition`
-- `rigs.json` = `RigDefinition`
-- `spots.json` = `SpotDefinition`（id, 表示名, 説明, `fishIds`, アタリ待機時間の範囲、
-  将来: 解放条件となる噂ID `unlockRumorId`）
+- `rigs.json` = `RigDefinition`（釣行ごとの消耗品としての仕掛け）
+- `rods.json` / `reels.json` / `lines.json` = `RodDefinition` / `ReelDefinition` /
+  `LineDefinition`（id, 表示名, 説明, `cost`, `tier`, ステータス1つ。道具屋での所持品）
+- `spots.json` = `SpotDefinition`（id, 表示名, 説明, `fishIds`, アタリ待機時間の範囲,
+  `unlockRequiresFishId?`＝このIDの魚(通常はぬし)を釣るまで選択不可）
 - `village.json` = `VillageMapDefinition`（id, 表示名, `width`/`height`, `entities[]`。
   entityは `{ id, type: 'npc'|'building'|'exit', name, x, y, action, ... }`）
 - `villagers.json` = `VillagerDefinition`（id, 表示名, emoji, `lines: string[]`。将来:
   条件付き会話の分岐データ）
+
+エリアを1つ追加したい場合は `spots.json` に `unlockRequiresFishId` で前段の釣り場のぬしIDを
+指定したエントリを追加し、`fish.json` にそのエリアの通常種+ぬし(`isNushi: true`)を追加、
+`favoredBaitIds` / `spotIds` を対応させるだけでよい。コード変更は不要。
 
 魚やNPCを1体追加したい場合は対応するjsonに追加するだけで、探索・図鑑・釣果選択ロジックは
 配列を動的に走査するためコード変更は不要という設計を維持する。
@@ -161,14 +203,18 @@ src/
 ## 8. セーブデータ（localStorage）
 
 - キー: `umi-no-nushi:save`
-- スキーマに `version` を持たせ、マイグレーションに備える（現在 `version: 2`。`version: 1` の
-  セーブは読み込み時にデフォルト値（初日・朝マヅメ・晴れ・噂なし）を補って `version: 2` として
-  引き継ぐ）。
+- スキーマに `version` を持たせ、マイグレーションに備える（現在 `version: 3`。`version: 1`/`2` の
+  セーブは読み込み時にデフォルト値を補って `version: 3` として引き継ぐ。`persist.ts` の
+  `migrateFromV1` / `migrateFromV2`）。
 - 保存内容:
   - 所持金、在庫（未売却の釣果リスト）、図鑑進捗（既存）
   - `day`（経過日数）, `timeOfDay`（`'dawn' | 'day' | 'dusk' | 'night'`）, `weather`
     （`'sunny' | 'cloudy' | 'rainy'`）
-  - `rumors: string[]`（村人から聞いて解放した噂ID。将来、釣り場の解放条件として参照する）
+  - `rumors: string[]`（村人から聞いて解放した噂ID。現状は保存のみで未使用。将来、追加の解放条件
+    として使う余地を残す。エリア解放そのものは図鑑の捕獲済みフラグで判定している）
+  - `ownedRodIds` / `ownedReelIds` / `ownedLineIds: string[]`（所持している道具のID一覧。
+    tierが最も高いものを自動装備する。新規セーブは各カテゴリtier1の無料品を1つ所持した状態で
+    始まる）
 - 保存タイミング: 状態が変化するたびに `useEffect` でシリアライズして保存。
   読み込み失敗・スキーマ不一致時は初期状態にフォールバックする。
 
@@ -179,24 +225,30 @@ src/
 ### 実装済み
 - フィールド探索（`village.json` 1マップ・十字キー移動・当たり判定・NPC会話・建物インタラクション）
 - 会話ウィンドウ（1文ずつ送るダイアログボックス）
-- 漁協（在庫売却）・宿屋（休むと時間帯が進む）のフィールド連動
+- 漁協（在庫売却）・宿屋（休むと時間帯が進む）・道具屋（`toolShop`画面）のフィールド連動
 - 釣りの基本ループ（仕掛け/餌選択→キャスト→アタリ待ち→アワセ→ファイト→結果→図鑑登録）
 - テンション管理ファイト（魚ごとの引きのクセ・仕掛けによる補正）
-- 時間帯/天候の進行ロジック（`game/time.ts`）。**現状は宿屋で休むと進むのみで、まだ魚の出現条件
-  には未接続**。
-- localStorage永続化・マイグレーション
+- **竿・リール・糸のステータス化と道具屋での購入**（`rods.json` / `reels.json` / `lines.json`、
+  `ToolShopScreen`）。所持品からtier最高のものを自動装備する（`game/gear.ts`）
+- **道具不足による大物釣り上げ不可ゲート**（`requiredLineStrength` と `GEAR_DEFICIT_MULTIPLIER`
+  による糸切れ耐性の増減、`game/fightEngine.ts`）。ファイト画面に道具不足の警告バナーを表示
+- **釣り場4エリア（堤防→磯→沖堤→離島）とエリアごとの「ぬし」**、ぬしを釣ると図鑑の捕獲済み
+  フラグ経由で次エリアが解放（`SpotDefinition.unlockRequiresFishId`、`SpotSelectScreen`
+  でロック表示）。初回撃破時は結果画面にエリア解放メッセージを表示
+- **時間帯・天候による魚の出現テーブルの変化**（`FishDefinition.appearsInTimeOfDay` /
+  `appearsInWeather`、`game/fishing.ts` の `candidateFish`）。ぬしは基本的にこれらの条件と
+  専用の餌(生き餌)が揃った時のみ候補に入る
+- 時間帯/天候の進行ロジック（`game/time.ts`）。宿屋で休むと進む
+- localStorage永続化・マイグレーション（v1→v2→v3）
 
 ### 未実装（将来拡張として`CLAUDE.md`のみ更新済み、または完全に未着手）
 - キャストの飛距離ゲージ（タイミング操作）
 - アワセの「早すぎ失敗」判定
 - 待機中に魚影が近づいてくる演出
-- 竿・リールのステータス化と、道具不足による大物釣り上げ不可ゲート（`rods.json` / `reels.json`）
-- 道具屋での竿・リール・糸の段階的な購入（現状はフィールド上でダイアログのみ表示）
-- 時間帯・天候ごとの魚の出現条件（`fish.json` にフィールド追加予定）
-- 噂による釣り場解放（`rumors` は保存されるが、`spots.json` の解放条件にはまだ未接続。現状は
-  全釣り場が最初から解放されている）
-- 複数の釣り場・複数のエリア（現在は釣り場1箇所のみ）
-- エリアごとの「ぬし」を釣った時の次エリア解放
+- 道具屋での「装備を選ぶ」UI（現状は所持品からtier最高を自動装備するのみで、あえて弱い装備を
+  選ぶ操作はできない）
+- 噂システムの実質的な活用（`rumors` は保存されるが、解放条件としては未接続。現状のエリア解放は
+  図鑑の捕獲済みフラグのみで判定している）
 - ドット絵アセットへの差し替え（現状は絵文字/色付き矩形のプレースホルダー）
 - セーブスロット複数化、実績等
 

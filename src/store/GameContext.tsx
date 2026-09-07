@@ -12,7 +12,14 @@ type Action =
   | { type: "setLastTackle"; baitId: string; rigId: string }
   | { type: "advanceTime" }
   | { type: "learnRumor"; rumorId: string }
+  | { type: "buyGear"; category: "rod" | "reel" | "line"; id: string; cost: number }
   | { type: "reset" };
+
+const GEAR_KEY: Record<"rod" | "reel" | "line", "ownedRodIds" | "ownedReelIds" | "ownedLineIds"> = {
+  rod: "ownedRodIds",
+  reel: "ownedReelIds",
+  line: "ownedLineIds",
+};
 
 function reducer(state: SaveData, action: Action): SaveData {
   switch (action.type) {
@@ -61,6 +68,11 @@ function reducer(state: SaveData, action: Action): SaveData {
       return state.rumors.includes(action.rumorId)
         ? state
         : { ...state, rumors: [...state.rumors, action.rumorId] };
+    case "buyGear": {
+      const key = GEAR_KEY[action.category];
+      if (state.money < action.cost || state[key].includes(action.id)) return state;
+      return { ...state, money: state.money - action.cost, [key]: [...state[key], action.id] };
+    }
     case "reset":
       return createInitialSave();
     default:

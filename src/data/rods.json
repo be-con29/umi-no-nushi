@@ -1,0 +1,34 @@
+[
+  {
+    "id": "rod_bamboo",
+    "name": "竹竿",
+    "description": "村に代々伝わる、使い込まれた竹の竿。最初はこれしかない。",
+    "cost": 0,
+    "tier": 1,
+    "flex": 0
+  },
+  {
+    "id": "rod_glass",
+    "name": "グラスロッド",
+    "description": "しなりが良く、大物の引きを受け流しやすい。",
+    "cost": 800,
+    "tier": 2,
+    "flex": 15
+  },
+  {
+    "id": "rod_carbon",
+    "name": "カーボンロッド",
+    "description": "軽くて強い、玄人好みの一本。",
+    "cost": 2500,
+    "tier": 3,
+    "flex": 35
+  },
+  {
+    "id": "rod_master",
+    "name": "職人の一本竿",
+    "description": "村の老職人が精魂込めて仕上げた渾身の竿。",
+    "cost": 6000,
+    "tier": 4,
+    "flex": 60
+  }
+]

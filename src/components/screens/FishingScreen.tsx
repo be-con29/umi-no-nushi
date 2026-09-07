@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { BaitDefinition, FishDefinition, RigDefinition, SpotDefinition } from "../../types";
+import type { BaitDefinition, FishDefinition, RigDefinition, SpotDefinition, TimeOfDay, Weather } from "../../types";
 import { candidateFish, pickFish, rollBiteWaitMs } from "../../game/fishing";
 import { HOOK_WINDOW_MS } from "../../game/balance";
 import { PrimaryButton, ScreenShell, SecondaryButton } from "../ui/ScreenShell";
@@ -11,11 +11,13 @@ interface FishingScreenProps {
   bait: BaitDefinition;
   rig: RigDefinition;
   allFish: FishDefinition[];
+  timeOfDay: TimeOfDay;
+  weather: Weather;
   onHooked: (fish: FishDefinition) => void;
   onBack: () => void;
 }
 
-export function FishingScreen({ spot, bait, rig, allFish, onHooked, onBack }: FishingScreenProps) {
+export function FishingScreen({ spot, bait, rig, allFish, timeOfDay, weather, onHooked, onBack }: FishingScreenProps) {
   const [phase, setPhase] = useState<Phase>("ready");
   const hookedFishRef = useRef<FishDefinition | null>(null);
   const timerRef = useRef<number | undefined>(undefined);
@@ -30,7 +32,7 @@ export function FishingScreen({ spot, bait, rig, allFish, onHooked, onBack }: Fi
       setPhase("waiting");
       const waitMs = rollBiteWaitMs(spot, bait, rig);
       timerRef.current = window.setTimeout(() => {
-        const candidates = candidateFish(allFish, spot, bait);
+        const candidates = candidateFish(allFish, spot, bait, timeOfDay, weather);
         const fish = pickFish(candidates);
         if (!fish) {
           setPhase("noBite");

@@ -1,0 +1,34 @@
+[
+  {
+    "id": "reel_wood",
+    "name": "木製リール",
+    "description": "簡素だが壊れにくい、昔ながらのリール。",
+    "cost": 0,
+    "tier": 1,
+    "reelPower": 1.0
+  },
+  {
+    "id": "reel_standard",
+    "name": "標準リール",
+    "description": "程よい巻き取り力を持つ、扱いやすいリール。",
+    "cost": 700,
+    "tier": 2,
+    "reelPower": 1.2
+  },
+  {
+    "id": "reel_highgear",
+    "name": "ハイギアリール",
+    "description": "力強く一気に巻き取れる、大物向けのリール。",
+    "cost": 2200,
+    "tier": 3,
+    "reelPower": 1.45
+  },
+  {
+    "id": "reel_master",
+    "name": "職人のリール",
+    "description": "滑らかな巻き心地と圧倒的なパワーを両立させた逸品。",
+    "cost": 5500,
+    "tier": 4,
+    "reelPower": 1.75
+  }
+]

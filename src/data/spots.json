@@ -1,10 +1,37 @@
 [
   {
-    "id": "boto_pier",
-    "name": "港の防波堤",
-    "description": "初心者向けの釣り場。小物から大物、噂の主まで一通り狙える。",
-    "fishIds": ["aji", "kurodai", "hirame", "kanpachi", "nushi"],
+    "id": "teibou",
+    "name": "堤防",
+    "description": "村の目の前に広がる、初心者向けの釣り場。",
+    "fishIds": ["aji", "kurodai", "kokuten"],
     "biteWaitMinMs": 1800,
     "biteWaitMaxMs": 5000
+  },
+  {
+    "id": "iso",
+    "name": "磯",
+    "description": "岩場が広がる釣り場。堤防より型のいい魚が狙える。",
+    "fishIds": ["hirame", "mebaru", "ganki"],
+    "biteWaitMinMs": 2200,
+    "biteWaitMaxMs": 5500,
+    "unlockRequiresFishId": "kokuten"
+  },
+  {
+    "id": "okitsutsumi",
+    "name": "沖堤",
+    "description": "船でしか渡れない沖の堤防。大物の回遊ルートに近い。",
+    "fishIds": ["kanpachi", "shiira", "shiokiba"],
+    "biteWaitMinMs": 2500,
+    "biteWaitMaxMs": 6000,
+    "unlockRequiresFishId": "ganki"
+  },
+  {
+    "id": "ritou",
+    "name": "離島",
+    "description": "最奥にある無人島の沖。伝説の主が棲むという。",
+    "fishIds": ["kue", "nushi"],
+    "biteWaitMinMs": 3000,
+    "biteWaitMaxMs": 7000,
+    "unlockRequiresFishId": "shiokiba"
   }
 ]

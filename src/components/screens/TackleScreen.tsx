@@ -9,6 +9,8 @@ interface TackleScreenProps {
   money: number;
   initialBaitId?: string;
   initialRigId?: string;
+  /** 現在装備中の竿・リール・糸の名前(表示用) */
+  gearSummary: { rodName: string; reelName: string; lineName: string };
   onConfirm: (baitId: string, rigId: string) => void;
   onBack: () => void;
 }
@@ -19,6 +21,7 @@ export function TackleScreen({
   money,
   initialBaitId,
   initialRigId,
+  gearSummary,
   onConfirm,
   onBack,
 }: TackleScreenProps) {
@@ -46,6 +49,10 @@ export function TackleScreen({
     >
       <div className="flex justify-center">
         <MoneyBadge money={money} />
+      </div>
+
+      <div className="text-xs text-white/60 text-center bg-white/5 border border-white/10 rounded-lg py-2 px-3">
+        現在の装備: {gearSummary.rodName} / {gearSummary.reelName} / {gearSummary.lineName}
       </div>
 
       <section>
