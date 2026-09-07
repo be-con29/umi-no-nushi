@@ -1,18 +1,42 @@
 {
   "id": "nagiura",
   "name": "凪浦",
-  "width": 9,
-  "height": 11,
-  "startX": 4,
+  "width": 16,
+  "height": 18,
+  "startX": 7,
   "startY": 4,
-  "entities": [
+  "terrainRows": [
+    "gggggggggggggggg",
+    "gggggggggggggggg",
+    "gggggggggggggggg",
+    "gggggggggggggggg",
+    "gggggggggggggggg",
+    "gggggggggggggggg",
+    "gggggggggggggggg",
+    "gggggggggggggggg",
+    "gggggggggggggggg",
+    "gggggggccggggggg",
+    "gggggggccggggggg",
+    "gggggggccggggggg",
+    "gggggggccggggggg",
+    "ssrssssssssssrss",
+    "bbbbbbbbbbbbbbbb",
+    "wwwwwwwppwwwwwww",
+    "wwwwwwwppwwwwwww",
+    "wwwwwwwppwwwwwww"
+  ],
+  "buildings": [
     {
       "id": "house",
-      "type": "building",
       "name": "じぶんの家",
-      "emoji": "🏠",
       "x": 1,
       "y": 1,
+      "width": 3,
+      "height": 2,
+      "entranceOffsetX": 1,
+      "entranceOffsetY": 1,
+      "roofColor": "#6d5233",
+      "wallColor": "#d9c8a0",
       "action": {
         "kind": "dialogue",
         "speakerName": "自分の家",
@@ -21,20 +45,28 @@
     },
     {
       "id": "tackle_shop",
-      "type": "building",
       "name": "道具屋",
-      "emoji": "🏪",
-      "x": 4,
+      "x": 6,
       "y": 1,
+      "width": 4,
+      "height": 3,
+      "entranceOffsetX": 1,
+      "entranceOffsetY": 2,
+      "roofColor": "#4a5a63",
+      "wallColor": "#c7b283",
       "action": { "kind": "screen", "target": "toolShop" }
     },
     {
       "id": "bait_shop",
-      "type": "building",
       "name": "餌屋",
-      "emoji": "🏬",
-      "x": 7,
+      "x": 11,
       "y": 1,
+      "width": 3,
+      "height": 2,
+      "entranceOffsetX": 1,
+      "entranceOffsetY": 1,
+      "roofColor": "#5c4a3a",
+      "wallColor": "#cdbfa0",
       "action": {
         "kind": "dialogue",
         "speakerName": "餌屋のおかみ",
@@ -43,57 +75,37 @@
     },
     {
       "id": "union",
-      "type": "building",
       "name": "漁協",
-      "emoji": "🏢",
       "x": 1,
       "y": 5,
+      "width": 3,
+      "height": 2,
+      "entranceOffsetX": 1,
+      "entranceOffsetY": 1,
+      "roofColor": "#3f5064",
+      "wallColor": "#b9c4c9",
       "action": { "kind": "screen", "target": "stock" }
     },
     {
       "id": "inn",
-      "type": "building",
       "name": "宿屋",
-      "emoji": "🛌",
-      "x": 7,
+      "x": 11,
       "y": 5,
+      "width": 4,
+      "height": 3,
+      "entranceOffsetX": 1,
+      "entranceOffsetY": 2,
+      "roofColor": "#6b3f3a",
+      "wallColor": "#d9c29a",
       "action": { "kind": "restAtInn" }
-    },
-    {
-      "id": "villager_gonta",
-      "type": "npc",
-      "name": "漁師のゴンタ",
-      "emoji": "🎣",
-      "x": 3,
-      "y": 4,
-      "action": { "kind": "talk", "villagerId": "gonta" }
-    },
-    {
-      "id": "villager_obaa",
-      "type": "npc",
-      "name": "物知りのおばあ",
-      "emoji": "👵",
-      "x": 5,
-      "y": 7,
-      "action": { "kind": "talk", "villagerId": "obaa" }
-    },
-    {
-      "id": "villager_boy",
-      "type": "npc",
-      "name": "村の子供",
-      "emoji": "🧒",
-      "x": 2,
-      "y": 8,
-      "action": { "kind": "talk", "villagerId": "boy" }
-    },
-    {
-      "id": "to_sea",
-      "type": "exit",
-      "name": "波止場へ続く道",
-      "emoji": "🌊",
-      "x": 4,
-      "y": 10,
-      "action": { "kind": "screen", "target": "spotSelect" }
     }
+  ],
+  "npcs": [
+    { "id": "villager_gonta", "villagerId": "gonta", "x": 5, "y": 8, "facing": "down" },
+    { "id": "villager_obaa", "villagerId": "obaa", "x": 9, "y": 6, "facing": "left" },
+    { "id": "villager_boy", "villagerId": "boy", "x": 5, "y": 2, "facing": "down" }
+  ],
+  "exits": [
+    { "id": "to_sea", "name": "波止場の先", "x": 7, "y": 17, "action": { "kind": "screen", "target": "spotSelect" } }
   ]
 }

@@ -127,14 +127,21 @@ export interface LineDefinition {
   strength: number;
 }
 
-// ---- フィールド探索 ----
+// ---- フィールド探索(SFC風タイルマップ) ----
+// 見た目は絵文字を一切使わず、game/pixelArt.ts がコードで直接ドット絵を描画する。
 
 export type Direction = "up" | "down" | "left" | "right";
 
-export type FieldEntityType = "npc" | "building" | "exit";
+/**
+ * 地形タイル種別。1文字コードは data/village.json の `terrainRows` で使う
+ * (凡例は game/field.ts の TILE_CODE を参照)。
+ * - dirt: 土 / grass: 草 / sand: 砂 / cobble: 石畳 / rock: 岩(通行不可)
+ * - sea: 海(通行不可・波アニメ) / beach: 砂浜 / pier: 桟橋の木床
+ */
+export type TileType = "dirt" | "grass" | "sand" | "cobble" | "rock" | "sea" | "beach" | "pier";
 
 /**
- * フィールド上のエンティティ(NPC/建物/出口)にぶつかった時の振る舞い。
+ * フィールド上のインタラクション(建物入口/NPC/出口)にふれた時の振る舞い。
  * - talk: villagers.json の会話データを表示する
  * - dialogue: その場に書かれた台詞をそのまま表示する(ショップの仮台詞など)
  * - screen: 既存の画面(Screen)へ遷移する
@@ -146,11 +153,41 @@ export type FieldEntityAction =
   | { kind: "screen"; target: "stock" | "zukan" | "spotSelect" | "toolShop" }
   | { kind: "restAtInn" };
 
-export interface FieldEntity {
+/**
+ * 建物。左上タイル座標(x, y)から width×height タイルの矩形を占有し、
+ * 入口タイル(x+entranceOffsetX, y+entranceOffsetY)以外は通行不可の壁として扱う。
+ * 入口タイルに乗ると action が発火する。
+ */
+export interface BuildingDefinition {
   id: string;
-  type: FieldEntityType;
   name: string;
-  emoji: string;
+  x: number;
+  y: number;
+  /** 幅(タイル数)。3〜4程度を想定 */
+  width: number;
+  /** 高さ(タイル数)。2〜3程度を想定 */
+  height: number;
+  entranceOffsetX: number;
+  entranceOffsetY: number;
+  /** 屋根・壁の配色(パレットのキー)。game/pixelArt.ts のパレットに合わせる */
+  roofColor: string;
+  wallColor: string;
+  action: FieldEntityAction;
+}
+
+/** フィールド上に配置されたNPC。移動はせず、その場で向きを変える程度の動きをする */
+export interface NpcPlacement {
+  id: string;
+  villagerId: string;
+  x: number;
+  y: number;
+  facing: Direction;
+}
+
+/** 1タイルの単純な移動先トリガー(桟橋の先→釣り場選択、など)。地形は通行可能である前提 */
+export interface ExitPlacement {
+  id: string;
+  name: string;
   x: number;
   y: number;
   action: FieldEntityAction;
@@ -161,8 +198,12 @@ export interface VillageMapDefinition {
   name: string;
   width: number;
   height: number;
-  entities: FieldEntity[];
-  /** プレイヤーの初期出現位置 */
+  /** 1行1文字コードの地形定義。terrainRows[y][x] が TILE_CODE のキー(game/field.ts) */
+  terrainRows: string[];
+  buildings: BuildingDefinition[];
+  npcs: NpcPlacement[];
+  exits: ExitPlacement[];
+  /** プレイヤーの初期出現位置(タイル座標) */
   startX: number;
   startY: number;
 }
@@ -170,7 +211,8 @@ export interface VillageMapDefinition {
 export interface VillagerDefinition {
   id: string;
   name: string;
-  emoji: string;
+  /** ドット絵スプライトの服の色(パレットのキー)。game/pixelArt.ts のパレットに合わせる */
+  spriteColor: string;
   /** 1回の会話で1文ずつ順番に表示する台詞 */
   lines: string[];
 }
