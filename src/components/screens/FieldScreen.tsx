@@ -11,6 +11,7 @@ import {
   type FieldPosition,
 } from "../../game/field";
 import {
+  DECORATION_VARIANTS,
   PLAYER_COLORS,
   SEA_ANIM_FRAME_MS,
   SEA_ANIM_FRAMES,
@@ -18,6 +19,7 @@ import {
   WALK_ANIM_FRAME_MS,
   getBuildingCellCanvas,
   getCharacterCanvas,
+  getDecorationCanvas,
   getTileCanvas,
   tileVariantFor,
   villagerColors,
@@ -58,7 +60,17 @@ function drawBuilding(
   for (let ry = 0; ry < building.height; ry++) {
     for (let rx = 0; rx < building.width; rx++) {
       const isEntrance = rx === building.entranceOffsetX && ry === building.entranceOffsetY;
-      const kind = ry < roofRows ? (ry === roofRows - 1 ? "roofEdge" : "roof") : isEntrance ? "door" : "wall";
+      const isAboveEntrance = ry === roofRows - 1 && rx === building.entranceOffsetX;
+      const kind =
+        ry < roofRows
+          ? isAboveEntrance
+            ? "sign"
+            : ry === roofRows - 1
+              ? "roofEdge"
+              : "roof"
+          : isEntrance
+            ? "door"
+            : "wall";
       const cell = getBuildingCellCanvas(kind, building.roofColor, building.wallColor);
       const tx = building.x + rx;
       const ty = building.y + ry;
@@ -186,6 +198,13 @@ export function FieldScreen({ map, money, day, timeOfDay, weather, onNavigate, o
         const dy = Math.round((ty * TILE_SIZE - camY) * SCALE);
         ctx.drawImage(tileCanvas, dx, dy, TILE_SIZE * SCALE, TILE_SIZE * SCALE);
       }
+    }
+
+    for (const deco of map.decorations) {
+      const sprite = getDecorationCanvas(deco.kind, (deco.x * 3 + deco.y * 5) % DECORATION_VARIANTS);
+      const dx = Math.round((deco.x * TILE_SIZE - camX) * SCALE);
+      const dy = Math.round((deco.y * TILE_SIZE - camY) * SCALE);
+      ctx.drawImage(sprite, dx, dy, TILE_SIZE * SCALE, TILE_SIZE * SCALE);
     }
 
     for (const building of map.buildings) drawBuilding(ctx, building, camX, camY);

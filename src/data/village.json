@@ -107,5 +107,15 @@
   ],
   "exits": [
     { "id": "to_sea", "name": "波止場の先", "x": 7, "y": 17, "action": { "kind": "screen", "target": "spotSelect" } }
+  ],
+  "decorations": [
+    { "id": "tree1", "kind": "tree", "x": 0, "y": 0 },
+    { "id": "tree2", "kind": "tree", "x": 4, "y": 0 },
+    { "id": "tree3", "kind": "tree", "x": 5, "y": 0 },
+    { "id": "tree4", "kind": "tree", "x": 10, "y": 0 },
+    { "id": "tree5", "kind": "tree", "x": 14, "y": 0 },
+    { "id": "tree6", "kind": "tree", "x": 15, "y": 0 },
+    { "id": "tree7", "kind": "tree", "x": 0, "y": 6 },
+    { "id": "tree8", "kind": "tree", "x": 15, "y": 9 }
   ]
 }

@@ -60,6 +60,8 @@ interface CharacterColors {
   hair: string;
   outfit: string;
   pants: string;
+  /** 主人公だけがかぶる麦わら帽子の色。未指定の場合は描かない(村人はかぶらない) */
+  cap?: string;
 }
 
 export const PLAYER_COLORS: CharacterColors = {
@@ -67,6 +69,7 @@ export const PLAYER_COLORS: CharacterColors = {
   hair: "#3a2a1c",
   outfit: CLOTHING_COLORS.indigo,
   pants: "#2e2a24",
+  cap: "#c9a866",
 };
 
 export function villagerColors(spriteColorKey: string): CharacterColors {
@@ -144,17 +147,22 @@ function drawSandTile(ctx: CanvasRenderingContext2D, seed: number): void {
 }
 
 function drawCobbleTile(ctx: CanvasRenderingContext2D, seed: number): void {
-  speckle(ctx, seed, PALETTE.cobbleBase, PALETTE.cobbleDark, PALETTE.cobbleLight, 8, 6);
-  // 目地(グラウト)線: 互い違いの煉瓦調パターン
+  // 目地(グラウト)を全面に敷いてから、一回り小さい石畳を載せる=タイル同士の継ぎ目がくっきり出る
   ctx.fillStyle = PALETTE.cobbleGrout;
-  const rowOffset = (seed % 2) * 4;
-  for (let y = 0; y < TILE_SIZE; y += 4) {
-    ctx.fillRect(0, y, TILE_SIZE, 1);
-  }
-  for (let x = -rowOffset; x < TILE_SIZE; x += 8) {
-    for (let y = 0; y < TILE_SIZE; y += 4) {
-      if (x >= 0) ctx.fillRect(x, y, 1, 4);
-    }
+  ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+  ctx.fillStyle = PALETTE.cobbleBase;
+  ctx.fillRect(1, 1, TILE_SIZE - 2, TILE_SIZE - 2);
+  // 面取り: 左上を明るく、右下を暗くして石の厚みを出す
+  ctx.fillStyle = PALETTE.cobbleLight;
+  ctx.fillRect(1, 1, TILE_SIZE - 2, 1);
+  ctx.fillRect(1, 1, 1, TILE_SIZE - 2);
+  ctx.fillStyle = PALETTE.cobbleDark;
+  ctx.fillRect(1, TILE_SIZE - 2, TILE_SIZE - 2, 1);
+  ctx.fillRect(TILE_SIZE - 2, 1, 1, TILE_SIZE - 2);
+  // 石の表面のひび・欠け
+  const rand = mulberry32(seed);
+  for (let i = 0; i < 5; i++) {
+    setPixel(ctx, 2 + Math.floor(rand() * (TILE_SIZE - 4)), 2 + Math.floor(rand() * (TILE_SIZE - 4)), PALETTE.cobbleDark);
   }
 }
 
@@ -295,23 +303,43 @@ export function getTileCanvas(type: TileType, variant: number, seaFrame: number)
 // ---- 建物(屋根・壁・入口) ----
 // 建物は複数タイルの矩形で構成する。1セルずつ役割(屋根/屋根の軒/壁/入口)に応じて描く。
 
-export type BuildingCellKind = "roof" | "roofEdge" | "wall" | "door";
+export type BuildingCellKind = "roof" | "roofEdge" | "wall" | "door" | "sign";
 
 function drawRoofCell(ctx: CanvasRenderingContext2D, base: string): void {
-  ctx.fillStyle = base;
-  ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
-  ctx.fillStyle = shade(base, 18);
-  ctx.fillRect(0, 0, TILE_SIZE, 1);
-  ctx.fillStyle = shade(base, -18);
+  // 上(明るい)から下(暗い)へのグラデーションで、瓦が陽を受けて傾斜している感じを出す
+  for (let y = 0; y < TILE_SIZE; y++) {
+    const t = y / (TILE_SIZE - 1);
+    ctx.fillStyle = shade(base, 14 - t * 26);
+    ctx.fillRect(0, y, TILE_SIZE, 1);
+  }
+  ctx.fillStyle = shade(base, -30);
   for (let x = 0; x < TILE_SIZE; x += 4) ctx.fillRect(x, 0, 1, TILE_SIZE);
+  // 棟(むね)のハイライト
+  ctx.fillStyle = shade(base, 32);
+  ctx.fillRect(0, 0, TILE_SIZE, 1);
 }
 
 function drawRoofEdgeCell(ctx: CanvasRenderingContext2D, base: string): void {
   drawRoofCell(ctx, base);
-  ctx.fillStyle = shade(base, -32);
-  ctx.fillRect(0, 12, TILE_SIZE, 4);
-  ctx.fillStyle = shade(base, -45);
+  // 軒先の影と、瓦の出っ張り(一段濃い帯)
+  ctx.fillStyle = shade(base, -38);
+  ctx.fillRect(0, 11, TILE_SIZE, 4);
+  ctx.fillStyle = shade(base, -20);
+  ctx.fillRect(0, 11, TILE_SIZE, 1);
+  ctx.fillStyle = shade(base, -55);
   ctx.fillRect(0, 15, TILE_SIZE, 1);
+}
+
+/** 軒先の中央に商店の看板を吊るしたセル(建物の入口の真上に配置する) */
+function drawSignCell(ctx: CanvasRenderingContext2D, roofBase: string): void {
+  drawRoofEdgeCell(ctx, roofBase);
+  ctx.fillStyle = "#3a2c1e";
+  ctx.fillRect(4, 9, 8, 6);
+  ctx.fillStyle = "#5c4530";
+  ctx.fillRect(4, 9, 8, 1);
+  ctx.fillRect(4, 9, 1, 6);
+  ctx.fillStyle = "#c9a866";
+  ctx.fillRect(6, 11, 4, 2);
 }
 
 function drawWallCell(ctx: CanvasRenderingContext2D, base: string): void {
@@ -319,6 +347,10 @@ function drawWallCell(ctx: CanvasRenderingContext2D, base: string): void {
   ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
   ctx.fillStyle = shade(base, -14);
   for (let y = 0; y < TILE_SIZE; y += 4) ctx.fillRect(0, y, TILE_SIZE, 1);
+  // 柱(左右の端に濃い縦の梁)
+  ctx.fillStyle = shade(base, -28);
+  ctx.fillRect(0, 0, 2, TILE_SIZE);
+  ctx.fillRect(TILE_SIZE - 2, 0, 2, TILE_SIZE);
   // 窓
   ctx.fillStyle = shade(base, -30);
   ctx.fillRect(5, 5, 6, 5);
@@ -331,6 +363,9 @@ function drawWallCell(ctx: CanvasRenderingContext2D, base: string): void {
 function drawDoorCell(ctx: CanvasRenderingContext2D, base: string): void {
   ctx.fillStyle = base;
   ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+  ctx.fillStyle = shade(base, -28);
+  ctx.fillRect(0, 0, 2, TILE_SIZE);
+  ctx.fillRect(TILE_SIZE - 2, 0, 2, TILE_SIZE);
   ctx.fillStyle = shade(base, -40);
   ctx.fillRect(4, 4, 8, 12);
   ctx.fillStyle = shade(base, -20);
@@ -357,6 +392,9 @@ export function getBuildingCellCanvas(kind: BuildingCellKind, roofColor: string,
     case "roofEdge":
       drawRoofEdgeCell(ctx, roofColor);
       break;
+    case "sign":
+      drawSignCell(ctx, roofColor);
+      break;
     case "wall":
       drawWallCell(ctx, wallColor);
       break;
@@ -365,6 +403,53 @@ export function getBuildingCellCanvas(kind: BuildingCellKind, roofColor: string,
       break;
   }
   buildingCellCache.set(key, canvas);
+  return canvas;
+}
+
+// ---- 装飾物(木) ----
+// 地形タイルの上に重ねて描く見た目だけのオブジェクト。背景は透明にし、下の地形が透けて見えるようにする。
+
+/** 木の樹冠色バリエーション(常緑〜やや黄みがかった緑) */
+const TREE_FOLIAGE: readonly string[] = ["#5f7a4a", "#6d8552", "#57724a"];
+export const DECORATION_VARIANTS = TREE_FOLIAGE.length;
+
+function drawTree(ctx: CanvasRenderingContext2D, variant: number): void {
+  const foliage = TREE_FOLIAGE[variant % TREE_FOLIAGE.length];
+  // 根元の影
+  ctx.fillStyle = "rgba(20, 20, 10, 0.25)";
+  ctx.beginPath();
+  ctx.ellipse(8, 14, 5, 2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // 幹
+  ctx.fillStyle = "#4a3524";
+  ctx.fillRect(7, 10, 2, 4);
+  // 樹冠(重ねた円でこんもりした茂みを表現)
+  ctx.fillStyle = shade(foliage, -15);
+  ctx.beginPath();
+  ctx.ellipse(8, 7, 6, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = foliage;
+  ctx.beginPath();
+  ctx.ellipse(6, 6, 4.5, 4.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(10, 7, 4, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = shade(foliage, 22);
+  ctx.beginPath();
+  ctx.ellipse(5, 4, 2.5, 2.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+const decorationCache = new Map<string, HTMLCanvasElement>();
+
+/** 装飾物の事前描画済みCanvasを返す(メモ化)。背景は透明 */
+export function getDecorationCanvas(kind: "tree", variant: number): HTMLCanvasElement {
+  const key = `${kind}:${variant}`;
+  const cached = decorationCache.get(key);
+  if (cached) return cached;
+  const canvas = newTileCanvas();
+  const ctx = canvas.getContext("2d")!;
+  if (kind === "tree") drawTree(ctx, variant);
+  decorationCache.set(key, canvas);
   return canvas;
 }
 
@@ -393,6 +478,8 @@ const DOWN_FRAMES: [Rect[], Rect[]] = [
     { x: 4, y: 7, w: 8, h: 5, color: "outfit" },
     { x: 5, y: 12, w: 3, h: 3, color: "pants" },
     { x: 8, y: 12, w: 3, h: 3, color: "pants" },
+    { x: 4, y: 0, w: 8, h: 2, color: "cap" },
+    { x: 3, y: 2, w: 10, h: 1, color: "cap" },
   ]),
   frame([
     { x: 3, y: 0, w: 10, h: 16, color: "outline" },
@@ -403,6 +490,8 @@ const DOWN_FRAMES: [Rect[], Rect[]] = [
     { x: 4, y: 7, w: 8, h: 5, color: "outfit" },
     { x: 4, y: 12, w: 3, h: 3, color: "pants" },
     { x: 9, y: 12, w: 3, h: 3, color: "pants" },
+    { x: 4, y: 0, w: 8, h: 2, color: "cap" },
+    { x: 3, y: 2, w: 10, h: 1, color: "cap" },
   ]),
 ];
 
@@ -413,6 +502,8 @@ const UP_FRAMES: [Rect[], Rect[]] = [
     { x: 4, y: 7, w: 8, h: 5, color: "outfit" },
     { x: 5, y: 12, w: 3, h: 3, color: "pants" },
     { x: 8, y: 12, w: 3, h: 3, color: "pants" },
+    { x: 4, y: 0, w: 8, h: 2, color: "cap" },
+    { x: 3, y: 2, w: 10, h: 1, color: "cap" },
   ]),
   frame([
     { x: 3, y: 0, w: 10, h: 16, color: "outline" },
@@ -420,6 +511,8 @@ const UP_FRAMES: [Rect[], Rect[]] = [
     { x: 4, y: 7, w: 8, h: 5, color: "outfit" },
     { x: 4, y: 12, w: 3, h: 3, color: "pants" },
     { x: 9, y: 12, w: 3, h: 3, color: "pants" },
+    { x: 4, y: 0, w: 8, h: 2, color: "cap" },
+    { x: 3, y: 2, w: 10, h: 1, color: "cap" },
   ]),
 ];
 
@@ -432,6 +525,8 @@ const LEFT_FRAMES: [Rect[], Rect[]] = [
     { x: 5, y: 7, w: 7, h: 5, color: "outfit" },
     { x: 5, y: 12, w: 3, h: 3, color: "pants" },
     { x: 8, y: 12, w: 2, h: 3, color: "pants" },
+    { x: 5, y: 0, w: 7, h: 2, color: "cap" },
+    { x: 4, y: 2, w: 2, h: 1, color: "cap" },
   ]),
   frame([
     { x: 4, y: 0, w: 8, h: 16, color: "outline" },
@@ -441,6 +536,8 @@ const LEFT_FRAMES: [Rect[], Rect[]] = [
     { x: 5, y: 7, w: 7, h: 5, color: "outfit" },
     { x: 4, y: 12, w: 3, h: 3, color: "pants" },
     { x: 9, y: 12, w: 2, h: 3, color: "pants" },
+    { x: 5, y: 0, w: 7, h: 2, color: "cap" },
+    { x: 4, y: 2, w: 2, h: 1, color: "cap" },
   ]),
 ];
 
@@ -457,7 +554,7 @@ const characterCache = new Map<string, HTMLCanvasElement>();
  * 'right' は 'left' を左右反転して使う(見た目は対称なので別途定義しない)。
  */
 export function getCharacterCanvas(direction: Direction, frameIndex: 0 | 1, colors: CharacterColors): HTMLCanvasElement {
-  const key = `${direction}:${frameIndex}:${colors.outfit}:${colors.hair}`;
+  const key = `${direction}:${frameIndex}:${colors.outfit}:${colors.hair}:${colors.cap ?? ""}`;
   const cached = characterCache.get(key);
   if (cached) return cached;
 
@@ -472,7 +569,9 @@ export function getCharacterCanvas(direction: Direction, frameIndex: 0 | 1, colo
     ctx.scale(-1, 1);
   }
   for (const r of rects) {
-    ctx.fillStyle = r.color === "outline" ? PALETTE.outline : colors[r.color];
+    const color = r.color === "outline" ? PALETTE.outline : colors[r.color];
+    if (!color) continue;
+    ctx.fillStyle = color;
     ctx.fillRect(r.x, r.y, r.w, r.h);
   }
   ctx.restore();

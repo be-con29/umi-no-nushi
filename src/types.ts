@@ -193,6 +193,14 @@ export interface ExitPlacement {
   action: FieldEntityAction;
 }
 
+/** 見た目だけの装飾物(木など)。当たり判定は持たず、常に通行可能な地形の上に重ねて描く */
+export interface DecorationPlacement {
+  id: string;
+  kind: "tree";
+  x: number;
+  y: number;
+}
+
 export interface VillageMapDefinition {
   id: string;
   name: string;
@@ -203,6 +211,7 @@ export interface VillageMapDefinition {
   buildings: BuildingDefinition[];
   npcs: NpcPlacement[];
   exits: ExitPlacement[];
+  decorations: DecorationPlacement[];
   /** プレイヤーの初期出現位置(タイル座標) */
   startX: number;
   startY: number;

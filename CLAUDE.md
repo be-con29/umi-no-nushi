@@ -124,6 +124,11 @@ src/
   `TILE_VARIANTS`(既定3)通りの見た目バリエーションを持たせ、`tileVariantFor(x, y)` でマス位置
   ごとに決定論的に割り当てることで、単調な繰り返しに見えないようにする。海のアニメだけは
   全タイル共通の1つの`seaFrame`で同期させる（潮の満ち引きが村全体で揃って見えるように）。
+- `cobble`(石畳)は目地色を全面に敷いてから一回り小さい石を重ね、面取り(左上を明るく・右下を
+  暗く)することでタイル1枚ごとの継ぎ目がくっきり見える「敷石」の質感にしている。
+- 見た目だけの装飾物(木など)は `decorations: DecorationPlacement[]` として地形とは別に持ち、
+  背景を透明にしたCanvas(`getDecorationCanvas`)を地形の上に重ねて描く。当たり判定は持たない
+  （通行可能な地形の上に置く前提）。
 
 ### マップ構成
 
@@ -134,9 +139,11 @@ src/
   `TileType[][]` に変換する。
 - 建物は `buildings: BuildingDefinition[]` で、1タイルではなく `width × height`
   （3×2〜4×3程度）の矩形を占有する。入口タイル(`entranceOffsetX/Y`で指定)以外は壁として
-  通行不可になる。描画は屋根(`roof`/`roofEdge`)・壁(`wall`)・入口(`door`)のセルに分けて
-  `roofColor` / `wallColor` から生成する。**入口は建物の低い側(通常は南側)からしか入れない**
-  （屋根を突き抜けて反対側から入ることはできない、という現実的な当たり判定にしている）。
+  通行不可になる。描画は屋根(`roof`/`roofEdge`)・看板(`sign`)・壁(`wall`)・入口(`door`)のセルに
+  分けて `roofColor` / `wallColor` から生成する。屋根は上(明)から下(暗)へグラデーションさせ、
+  入口の真上の軒先セルだけ看板(`sign`)にして、そこに小さな木の看板を吊るす。
+  **入口は建物の低い側(通常は南側)からしか入れない**（屋根を突き抜けて反対側から入ることは
+  できない、という現実的な当たり判定にしている）。
 - 陸側(村)に建物を配置し、村の中心から桟橋へ向けて石畳の道を通し、砂浜を挟んで桟橋(`pier`)が
   海(`sea`)へ伸びる、という構成にする。桟橋の先の1タイルを `exits: ExitPlacement[]` の
   出口として定義し、そこに乗ると `spotSelect` 画面へ遷移する。
@@ -173,6 +180,8 @@ src/
 - 歩行は2フレームのアニメーション(脚の位置を入れ替えるだけの簡易なもの)で、実際に移動できた
   ときだけ一定間隔(`WALK_ANIM_FRAME_MS`)で切り替える。立ち止まっている間は1frame目に固定する。
 - 服の色(`CLOTHING_COLORS`)は主人公専用の色と村人ごとの色を分け、見た目で区別できるようにする。
+  主人公だけ麦わら帽子(`CharacterColors.cap`)をかぶらせ、村人との判別をさらに容易にしている
+  （`cap` が未指定のキャラは帽子を描かない=村人はかぶらない）。
 
 ### カメラ
 
@@ -257,7 +266,8 @@ src/
   `unlockRequiresFishId?`＝このIDの魚(通常はぬし)を釣るまで選択不可）
 - `village.json` = `VillageMapDefinition`（id, 表示名, `width`/`height`, `startX`/`startY`,
   `terrainRows: string[]`(1文字コードの地形、5章参照), `buildings: BuildingDefinition[]`
-  (矩形の建物、入口位置、屋根/壁の色), `npcs: NpcPlacement[]`, `exits: ExitPlacement[]`）
+  (矩形の建物、入口位置、屋根/壁の色), `npcs: NpcPlacement[]`, `exits: ExitPlacement[]`,
+  `decorations: DecorationPlacement[]`(木などの当たり判定を持たない装飾物)）
 - `villagers.json` = `VillagerDefinition`（id, 表示名, `spriteColor`(ドット絵の服の色。
   `game/pixelArt.ts` の `CLOTHING_COLORS` のキー), `lines: string[]`。将来: 条件付き会話の
   分岐データ）
