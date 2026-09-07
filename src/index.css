@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #0b3352;
+  font-family: system-ui, "Hiragino Sans", "Noto Sans JP", sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 縦画面のスマホゲームを想定し、広い画面では中央にカード状で表示する */
+#root {
+  min-height: 100svh;
+  display: flex;
+  justify-content: center;
+}

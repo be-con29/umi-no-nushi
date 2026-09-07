@@ -1,0 +1,26 @@
+[
+  {
+    "id": "iwamushi",
+    "name": "岩虫",
+    "emoji": "🪱",
+    "description": "港の定番の餌。安くて手に入りやすく、小〜中型の魚がよく食いつく。",
+    "cost": 10,
+    "biteRateMultiplier": 1.0
+  },
+  {
+    "id": "koebi",
+    "name": "小エビ",
+    "emoji": "🦐",
+    "description": "岩虫より少し高いが食いが良い。平たい魚にも効果的。",
+    "cost": 25,
+    "biteRateMultiplier": 1.15
+  },
+  {
+    "id": "ikie",
+    "name": "生き餌",
+    "emoji": "🐟",
+    "description": "小魚をそのまま餌にする高級品。大物や警戒心の強い魚を狙うならこれ。",
+    "cost": 60,
+    "biteRateMultiplier": 0.9
+  }
+]

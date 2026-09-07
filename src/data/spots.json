@@ -1,0 +1,10 @@
+[
+  {
+    "id": "boto_pier",
+    "name": "港の防波堤",
+    "description": "初心者向けの釣り場。小物から大物、噂の主まで一通り狙える。",
+    "fishIds": ["aji", "kurodai", "hirame", "kanpachi", "nushi"],
+    "biteWaitMinMs": 1800,
+    "biteWaitMaxMs": 5000
+  }
+]

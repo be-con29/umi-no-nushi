@@ -1,0 +1,26 @@
+[
+  {
+    "id": "standard",
+    "name": "標準仕掛け",
+    "description": "バランス型。特に癖はない、基本の仕掛け。",
+    "tensionSnapBonus": 0,
+    "reelTensionModifier": 1.0,
+    "biteRateMultiplier": 1.0
+  },
+  {
+    "id": "heavy",
+    "name": "頑丈仕掛け",
+    "description": "糸が太く切れにくいが、魚に警戒されやすくアタリはやや遅い。",
+    "tensionSnapBonus": 15,
+    "reelTensionModifier": 1.0,
+    "biteRateMultiplier": 0.8
+  },
+  {
+    "id": "light",
+    "name": "軽量仕掛け",
+    "description": "食いつきは良くなるが糸が細く、巻くと張力が上がりやすい。",
+    "tensionSnapBonus": -10,
+    "reelTensionModifier": 1.2,
+    "biteRateMultiplier": 1.25
+  }
+]
