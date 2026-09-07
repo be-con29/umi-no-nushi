@@ -1,0 +1,103 @@
+{
+  "id": "nagiura",
+  "name": "凪浦",
+  "width": 9,
+  "height": 11,
+  "startX": 4,
+  "startY": 4,
+  "entities": [
+    {
+      "id": "house",
+      "type": "building",
+      "name": "じぶんの家",
+      "emoji": "🏠",
+      "x": 1,
+      "y": 1,
+      "action": {
+        "kind": "dialogue",
+        "speakerName": "自分の家",
+        "lines": ["ただいま。少し休んで身支度を整えた。", "……さて、今日はどこへ行こうか。"]
+      }
+    },
+    {
+      "id": "tackle_shop",
+      "type": "building",
+      "name": "道具屋",
+      "emoji": "🏪",
+      "x": 4,
+      "y": 1,
+      "action": {
+        "kind": "dialogue",
+        "speakerName": "道具屋の店主",
+        "lines": ["すまんな、いい竿とリールを仕入れる算段をつけてるところだ。", "もう少し待っててくれ。"]
+      }
+    },
+    {
+      "id": "bait_shop",
+      "type": "building",
+      "name": "餌屋",
+      "emoji": "🏬",
+      "x": 7,
+      "y": 1,
+      "action": {
+        "kind": "dialogue",
+        "speakerName": "餌屋のおかみ",
+        "lines": ["餌はいつでも岩虫・小エビ・生き餌を用意してるよ。", "釣り場に出る時にちゃんと選んでおくれ。"]
+      }
+    },
+    {
+      "id": "union",
+      "type": "building",
+      "name": "漁協",
+      "emoji": "🏢",
+      "x": 1,
+      "y": 5,
+      "action": { "kind": "screen", "target": "stock" }
+    },
+    {
+      "id": "inn",
+      "type": "building",
+      "name": "宿屋",
+      "emoji": "🛌",
+      "x": 7,
+      "y": 5,
+      "action": { "kind": "restAtInn" }
+    },
+    {
+      "id": "villager_gonta",
+      "type": "npc",
+      "name": "漁師のゴンタ",
+      "emoji": "🎣",
+      "x": 3,
+      "y": 4,
+      "action": { "kind": "talk", "villagerId": "gonta" }
+    },
+    {
+      "id": "villager_obaa",
+      "type": "npc",
+      "name": "物知りのおばあ",
+      "emoji": "👵",
+      "x": 5,
+      "y": 7,
+      "action": { "kind": "talk", "villagerId": "obaa" }
+    },
+    {
+      "id": "villager_boy",
+      "type": "npc",
+      "name": "村の子供",
+      "emoji": "🧒",
+      "x": 2,
+      "y": 8,
+      "action": { "kind": "talk", "villagerId": "boy" }
+    },
+    {
+      "id": "to_sea",
+      "type": "exit",
+      "name": "波止場へ続く道",
+      "emoji": "🌊",
+      "x": 4,
+      "y": 10,
+      "action": { "kind": "screen", "target": "spotSelect" }
+    }
+  ]
+}

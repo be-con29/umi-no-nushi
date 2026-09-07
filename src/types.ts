@@ -76,6 +76,59 @@ export interface SpotDefinition {
   biteWaitMaxMs: number;
 }
 
+// ---- フィールド探索 ----
+
+export type Direction = "up" | "down" | "left" | "right";
+
+export type FieldEntityType = "npc" | "building" | "exit";
+
+/**
+ * フィールド上のエンティティ(NPC/建物/出口)にぶつかった時の振る舞い。
+ * - talk: villagers.json の会話データを表示する
+ * - dialogue: その場に書かれた台詞をそのまま表示する(ショップの仮台詞など)
+ * - screen: 既存の画面(Screen)へ遷移する
+ * - restAtInn: 宿屋で休む(時間帯を進める)
+ */
+export type FieldEntityAction =
+  | { kind: "talk"; villagerId: string }
+  | { kind: "dialogue"; speakerName: string; lines: string[] }
+  | { kind: "screen"; target: "stock" | "zukan" | "spotSelect" }
+  | { kind: "restAtInn" };
+
+export interface FieldEntity {
+  id: string;
+  type: FieldEntityType;
+  name: string;
+  emoji: string;
+  x: number;
+  y: number;
+  action: FieldEntityAction;
+}
+
+export interface VillageMapDefinition {
+  id: string;
+  name: string;
+  width: number;
+  height: number;
+  entities: FieldEntity[];
+  /** プレイヤーの初期出現位置 */
+  startX: number;
+  startY: number;
+}
+
+export interface VillagerDefinition {
+  id: string;
+  name: string;
+  emoji: string;
+  /** 1回の会話で1文ずつ順番に表示する台詞 */
+  lines: string[];
+}
+
+// ---- 時間・天候 ----
+
+export type TimeOfDay = "dawn" | "day" | "dusk" | "night";
+export type Weather = "sunny" | "cloudy" | "rainy";
+
 // ---- セーブデータ ----
 
 export interface CaughtFish {
@@ -93,10 +146,16 @@ export interface ZukanEntry {
 }
 
 export interface SaveData {
-  version: 1;
+  version: 2;
   money: number;
   stock: CaughtFish[];
   zukan: Record<string, ZukanEntry>;
   lastBaitId?: string;
   lastRigId?: string;
+  /** 経過日数(1始まり) */
+  day: number;
+  timeOfDay: TimeOfDay;
+  weather: Weather;
+  /** 村人から聞いて解放した噂ID(将来、釣り場の解放条件として使う) */
+  rumors: string[];
 }

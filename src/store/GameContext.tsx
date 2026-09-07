@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useReducer } from "react
 import type { ReactNode } from "react";
 import type { CaughtFish, SaveData } from "../types";
 import { createInitialSave, loadSave, saveSave } from "./persist";
+import { advanceTime } from "../game/time";
 
 type Action =
   | { type: "spend"; amount: number }
@@ -9,6 +10,8 @@ type Action =
   | { type: "sell"; instanceId: string }
   | { type: "sellAll" }
   | { type: "setLastTackle"; baitId: string; rigId: string }
+  | { type: "advanceTime" }
+  | { type: "learnRumor"; rumorId: string }
   | { type: "reset" };
 
 function reducer(state: SaveData, action: Action): SaveData {
@@ -52,6 +55,12 @@ function reducer(state: SaveData, action: Action): SaveData {
     }
     case "setLastTackle":
       return { ...state, lastBaitId: action.baitId, lastRigId: action.rigId };
+    case "advanceTime":
+      return { ...state, ...advanceTime(state) };
+    case "learnRumor":
+      return state.rumors.includes(action.rumorId)
+        ? state
+        : { ...state, rumors: [...state.rumors, action.rumorId] };
     case "reset":
       return createInitialSave();
     default:

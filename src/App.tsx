@@ -1,9 +1,9 @@
 import { useCallback, useState } from "react";
 import { GameProvider, useGame } from "./store/GameContext";
-import { BAITS, FISH, RIGS, SPOTS, findBait, findFish, findRig, findSpot } from "./data";
+import { BAITS, FISH, RIGS, SPOTS, VILLAGE, findBait, findFish, findRig, findSpot } from "./data";
 import type { FishDefinition } from "./types";
 import { calcPrice, rollSizeCm } from "./game/fishing";
-import { HarborScreen } from "./components/screens/HarborScreen";
+import { FieldScreen } from "./components/screens/FieldScreen";
 import { SpotSelectScreen } from "./components/screens/SpotSelectScreen";
 import { TackleScreen } from "./components/screens/TackleScreen";
 import { FishingScreen } from "./components/screens/FishingScreen";
@@ -12,7 +12,7 @@ import { ResultScreen } from "./components/screens/ResultScreen";
 import { StockScreen } from "./components/screens/StockScreen";
 import { ZukanScreen } from "./components/screens/ZukanScreen";
 
-type Screen = "harbor" | "spotSelect" | "tackle" | "fishing" | "fight" | "result" | "stock" | "zukan";
+type Screen = "field" | "spotSelect" | "tackle" | "fishing" | "fight" | "result" | "stock" | "zukan";
 
 interface Session {
   spotId?: string;
@@ -30,7 +30,7 @@ interface Session {
 
 function GameApp() {
   const { state, dispatch } = useGame();
-  const [screen, setScreen] = useState<Screen>("harbor");
+  const [screen, setScreen] = useState<Screen>("field");
   const [session, setSession] = useState<Session>({});
 
   const enterFishing = useCallback(
@@ -44,14 +44,16 @@ function GameApp() {
     [dispatch],
   );
 
-  if (screen === "harbor") {
+  if (screen === "field") {
     return (
-      <HarborScreen
+      <FieldScreen
+        map={VILLAGE}
         money={state.money}
-        stockCount={state.stock.length}
-        onGoFishing={() => setScreen("spotSelect")}
-        onGoStock={() => setScreen("stock")}
-        onGoZukan={() => setScreen("zukan")}
+        day={state.day}
+        timeOfDay={state.timeOfDay}
+        weather={state.weather}
+        onNavigate={(target) => setScreen(target)}
+        onRestAtInn={() => dispatch({ type: "advanceTime" })}
       />
     );
   }
@@ -64,7 +66,7 @@ function GameApp() {
           setSession((s) => ({ ...s, spotId }));
           setScreen("tackle");
         }}
-        onBack={() => setScreen("harbor")}
+        onBack={() => setScreen("field")}
       />
     );
   }
@@ -88,7 +90,7 @@ function GameApp() {
     const bait = findBait(session.baitId ?? "");
     const rig = findRig(session.rigId ?? "");
     if (!spot || !bait || !rig) {
-      setScreen("harbor");
+      setScreen("field");
       return null;
     }
     return (
@@ -110,7 +112,7 @@ function GameApp() {
     const fish = session.hookedFish;
     const rig = findRig(session.rigId ?? "");
     if (!fish || !rig) {
-      setScreen("harbor");
+      setScreen("field");
       return null;
     }
     return (
@@ -148,7 +150,7 @@ function GameApp() {
         onContinue={() => {
           if (session.baitId && session.rigId) enterFishing(session.baitId, session.rigId);
         }}
-        onBackToHarbor={() => setScreen("harbor")}
+        onBackToVillage={() => setScreen("field")}
       />
     );
   }
@@ -161,13 +163,13 @@ function GameApp() {
         findFish={findFish}
         onSell={(instanceId) => dispatch({ type: "sell", instanceId })}
         onSellAll={() => dispatch({ type: "sellAll" })}
-        onBack={() => setScreen("harbor")}
+        onBack={() => setScreen("field")}
       />
     );
   }
 
   if (screen === "zukan") {
-    return <ZukanScreen fishList={FISH} zukan={state.zukan} onBack={() => setScreen("harbor")} />;
+    return <ZukanScreen fishList={FISH} zukan={state.zukan} onBack={() => setScreen("field")} />;
   }
 
   return null;

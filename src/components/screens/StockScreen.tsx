@@ -17,7 +17,7 @@ export function StockScreen({ money, stock, findFish, onSell, onSellAll, onBack 
   return (
     <ScreenShell
       title="在庫/売却"
-      footer={<SecondaryButton onClick={onBack}>港に戻る</SecondaryButton>}
+      footer={<SecondaryButton onClick={onBack}>村に戻る</SecondaryButton>}
     >
       <div className="flex justify-center">
         <MoneyBadge money={money} />

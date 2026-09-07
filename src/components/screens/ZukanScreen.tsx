@@ -22,7 +22,7 @@ export function ZukanScreen({ fishList, zukan, onBack }: ZukanScreenProps) {
     <ScreenShell
       title="図鑑"
       subtitle={`${caughtCount} / ${fishList.length} 種 発見`}
-      footer={<SecondaryButton onClick={onBack}>港に戻る</SecondaryButton>}
+      footer={<SecondaryButton onClick={onBack}>村に戻る</SecondaryButton>}
     >
       <div className="flex flex-col gap-2">
         {fishList.map((fish) => {

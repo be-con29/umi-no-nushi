@@ -9,7 +9,7 @@ interface SpotSelectScreenProps {
 
 export function SpotSelectScreen({ spots, onSelect, onBack }: SpotSelectScreenProps) {
   return (
-    <ScreenShell title="釣り場を選ぶ" footer={<SecondaryButton onClick={onBack}>港に戻る</SecondaryButton>}>
+    <ScreenShell title="釣り場を選ぶ" footer={<SecondaryButton onClick={onBack}>村に戻る</SecondaryButton>}>
       <div className="flex flex-col gap-3">
         {spots.map((spot) => (
           <button

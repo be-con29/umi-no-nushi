@@ -4,12 +4,23 @@ import fishJson from "./fish.json";
 import baitsJson from "./baits.json";
 import rigsJson from "./rigs.json";
 import spotsJson from "./spots.json";
-import type { BaitDefinition, FishDefinition, RigDefinition, SpotDefinition } from "../types";
+import villageJson from "./village.json";
+import villagersJson from "./villagers.json";
+import type {
+  BaitDefinition,
+  FishDefinition,
+  RigDefinition,
+  SpotDefinition,
+  VillageMapDefinition,
+  VillagerDefinition,
+} from "../types";
 
 export const FISH: FishDefinition[] = fishJson as FishDefinition[];
 export const BAITS: BaitDefinition[] = baitsJson as BaitDefinition[];
 export const RIGS: RigDefinition[] = rigsJson as RigDefinition[];
 export const SPOTS: SpotDefinition[] = spotsJson as SpotDefinition[];
+export const VILLAGE: VillageMapDefinition = villageJson as VillageMapDefinition;
+export const VILLAGERS: VillagerDefinition[] = villagersJson as VillagerDefinition[];
 
 export function findFish(id: string): FishDefinition | undefined {
   return FISH.find((f) => f.id === id);
@@ -22,4 +33,7 @@ export function findRig(id: string): RigDefinition | undefined {
 }
 export function findSpot(id: string): SpotDefinition | undefined {
   return SPOTS.find((s) => s.id === id);
+}
+export function findVillager(id: string): VillagerDefinition | undefined {
+  return VILLAGERS.find((v) => v.id === id);
 }

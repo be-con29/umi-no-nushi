@@ -8,7 +8,7 @@ interface ResultScreenProps {
   price?: number;
   isNewRecord?: boolean;
   onContinue: () => void;
-  onBackToHarbor: () => void;
+  onBackToVillage: () => void;
 }
 
 export function ResultScreen({
@@ -18,7 +18,7 @@ export function ResultScreen({
   price,
   isNewRecord,
   onContinue,
-  onBackToHarbor,
+  onBackToVillage,
 }: ResultScreenProps) {
   return (
     <ScreenShell title={status === "won" ? "釣果！" : "残念…"}>
@@ -32,7 +32,7 @@ export function ResultScreen({
               <p className="text-amber-300 font-bold text-sm">🏆 自己記録更新！</p>
             )}
             <p className="text-amber-300 font-bold text-xl mt-2">売値目安 {price?.toLocaleString()}円</p>
-            <p className="text-white/50 text-xs mt-1">港の在庫に追加されました。図鑑にも登録済み。</p>
+            <p className="text-white/50 text-xs mt-1">漁協の在庫に追加されました。図鑑にも登録済み。</p>
           </>
         ) : (
           <>
@@ -44,7 +44,7 @@ export function ResultScreen({
 
       <div className="flex flex-col gap-3">
         <PrimaryButton onClick={onContinue}>続けて釣る</PrimaryButton>
-        <SecondaryButton onClick={onBackToHarbor}>港に戻る</SecondaryButton>
+        <SecondaryButton onClick={onBackToVillage}>村に戻る</SecondaryButton>
       </div>
     </ScreenShell>
   );
